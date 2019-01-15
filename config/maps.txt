@@ -30,6 +30,13 @@ map deltastation
 	minplayers 50
 endmap
 
+map donutstation
+	minplayers 50
+endmap
+
 map runtimestation
 	voteweight 0.2
+endmap
+
+map multiz_debug
 endmap

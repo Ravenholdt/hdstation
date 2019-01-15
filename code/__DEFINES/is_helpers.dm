@@ -15,8 +15,8 @@
 
 GLOBAL_LIST_INIT(turfs_without_ground, typecacheof(list(
 	/turf/open/space,
-	/turf/open/chasm, 
-	/turf/open/lava, 
+	/turf/open/chasm,
+	/turf/open/lava,
 	/turf/open/water
 	)))
 
@@ -65,9 +65,11 @@ GLOBAL_LIST_INIT(turfs_without_ground, typecacheof(list(
 #define isslimeperson(A) (is_species(A, /datum/species/jelly/slime))
 #define isluminescent(A) (is_species(A, /datum/species/jelly/luminescent))
 #define iszombie(A) (is_species(A, /datum/species/zombie))
+#define isskeleton(A) (is_species(A, /datum/species/skeleton))
 #define ismoth(A) (is_species(A, /datum/species/moth))
 #define ishumanbasic(A) (is_species(A, /datum/species/human))
 #define iscatperson(A) (ishumanbasic(A) && istype(A.dna.species, /datum/species/human/felinid) )
+#define isethereal(A) (is_species(A, /datum/species/ethereal))
 
 //more carbon mobs
 #define ismonkey(A) (istype(A, /mob/living/carbon/monkey))
@@ -149,7 +151,7 @@ GLOBAL_LIST_INIT(shoefootmob, typecacheof(list(
 	/mob/living/simple_animal/hostile/retaliate/goat,
 	/mob/living/carbon/true_devil,
 	)))
-	
+
 GLOBAL_LIST_INIT(clawfootmob, typecacheof(list(
 	/mob/living/carbon/alien/humanoid,
 	/mob/living/simple_animal/hostile/alien,
@@ -160,14 +162,14 @@ GLOBAL_LIST_INIT(clawfootmob, typecacheof(list(
 	/mob/living/simple_animal/hostile/bear,
 	/mob/living/simple_animal/hostile/jungle/mega_arachnid
 	)))
-	
+
 GLOBAL_LIST_INIT(barefootmob, typecacheof(list(
 	/mob/living/carbon/monkey,
 	/mob/living/simple_animal/pet/penguin,
 	/mob/living/simple_animal/hostile/gorilla,
 	/mob/living/simple_animal/hostile/jungle/mook
 	)))
-	
+
 GLOBAL_LIST_INIT(heavyfootmob, typecacheof(list(
 	/mob/living/simple_animal/hostile/megafauna,
 	/mob/living/simple_animal/hostile/jungle/leaper
@@ -183,6 +185,8 @@ GLOBAL_LIST_INIT(heavyfootmob, typecacheof(list(
 #define isovermind(A) (istype(A, /mob/camera/blob))
 
 #define iscameramob(A) (istype(A, /mob/camera))
+
+#define isaicamera(A) (istype(A, /mob/camera/aiEye))
 
 #define iseminence(A) (istype(A, /mob/camera/eminence))
 

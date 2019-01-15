@@ -23,6 +23,8 @@ Captain
 	paycheck = PAYCHECK_COMMAND
 	paycheck_department = ACCOUNT_SEC
 
+	mind_traits = list(TRAIT_DISK_VERIFIER)
+
 /datum/job/captain/get_access()
 	return get_all_accesses()
 
@@ -58,7 +60,7 @@ Captain
 	name = "Captain (Hardsuit)"
 
 	mask = /obj/item/clothing/mask/gas/sechailer
-	suit = /obj/item/clothing/suit/space/hardsuit/captain
+	suit = /obj/item/clothing/suit/space/hardsuit/swat/captain
 	suit_store = /obj/item/tank/internals/oxygen
 
 /*
@@ -69,7 +71,7 @@ Head of Personnel
 	flag = HOP
 	department_head = list("Captain")
 	department_flag = CIVILIAN
-	head_announce = list("Supply", "Service")
+	head_announce = list(RADIO_CHANNEL_SUPPLY, RADIO_CHANNEL_SERVICE)
 	faction = "Station"
 	total_positions = 1
 	spawn_positions = 1

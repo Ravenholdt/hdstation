@@ -19,7 +19,7 @@ GLOBAL_LIST_INIT(summoned_guns, list(
 	/obj/item/gun/ballistic/automatic/ar,
 	/obj/item/gun/ballistic/revolver/mateba,
 	/obj/item/gun/ballistic/shotgun/boltaction,
-	/obj/item/gun/ballistic/automatic/speargun,
+	/obj/item/pneumatic_cannon/speargun,
 	/obj/item/gun/ballistic/automatic/mini_uzi,
 	/obj/item/gun/energy/lasercannon,
 	/obj/item/gun/energy/kinetic_accelerator/crossbow/large,
@@ -83,7 +83,7 @@ GLOBAL_LIST_INIT(summoned_special_magic, list(
 	/obj/item/necromantic_stone,
 	/obj/item/blood_contract))
 
-//everything above except for single use spellbooks, because those are for basic bitches
+//everything above except for single use spellbooks, because they are counted separately (and are for basic bitches anyways)
 GLOBAL_LIST_INIT(summoned_magic_objectives, list(
 	/obj/item/antag_spawner/contract,
 	/obj/item/blood_contract,

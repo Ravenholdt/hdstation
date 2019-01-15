@@ -1098,7 +1098,8 @@
 					/obj/item/reagent_containers/blood/BMinus,
 					/obj/item/reagent_containers/blood/OPlus,
 					/obj/item/reagent_containers/blood/OMinus,
-					/obj/item/reagent_containers/blood/lizard)
+					/obj/item/reagent_containers/blood/lizard,
+					/obj/item/reagent_containers/blood/ethereal)
 	crate_name = "blood freezer"
 	crate_type = /obj/structure/closet/crate/freezer
 
@@ -1405,12 +1406,11 @@
 	crate_type = /obj/structure/closet/crate/secure
 
 /datum/supply_pack/service/vending/bartending
-	name = "Bartending Supply Crate"
-	desc = "Bring on the booze with vending machine refills, as well as a free book containing the well-kept secrets to the bartending trade!"
+	name = "Booze-o-mat and Coffee Supply Crate"
+	desc = "Bring on the booze and coffee vending machine refills."
 	cost = 2000
 	contains = list(/obj/item/vending_refill/boozeomat,
-					/obj/item/vending_refill/coffee,
-					/obj/item/book/granter/action/drink_fling)
+					/obj/item/vending_refill/coffee)
 	crate_name = "bartending supply crate"
 
 /datum/supply_pack/service/vending/cigarette
@@ -1943,6 +1943,7 @@
 					/obj/item/clothing/gloves/color/white,
 					/obj/item/clothing/mask/gas/mime,
 					/obj/item/clothing/head/beret,
+					/obj/item/clothing/head/frenchberet,
 					/obj/item/clothing/suit/suspenders,
 					/obj/item/reagent_containers/food/drinks/bottle/bottleofnothing,
 					/obj/item/storage/backpack/mime)
@@ -1953,29 +1954,20 @@
 	name = "Toy Crate"
 	desc = "Who cares about pride and accomplishment? Skip the gaming and get straight to the sweet rewards with this product! Contains five random toys. Warranty void if used to prank research directors."
 	cost = 5000 // or play the arcade machines ya lazy bum
-	// TODO make this actually just use the arcade machine loot list
 	num_contained = 5
-	contains = list(/obj/item/toy/spinningtoy,
-	                /obj/item/toy/sword,
-	                /obj/item/toy/foamblade,
-	                /obj/item/toy/talking/AI,
-	                /obj/item/toy/talking/owl,
-	                /obj/item/toy/talking/griffin,
-	                /obj/item/toy/nuke,
-	                /obj/item/toy/minimeteor,
-	                /obj/item/toy/plush/carpplushie,
-	                /obj/item/toy/plush/lizardplushie,
-	                /obj/item/toy/plush/snakeplushie,
-	                /obj/item/toy/plush/nukeplushie,
-	                /obj/item/toy/plush/slimeplushie,
-	                /obj/item/coin/antagtoken,
-	                /obj/item/stack/tile/fakespace/loaded,
-	                /obj/item/gun/ballistic/shotgun/toy/crossbow,
-	                /obj/item/toy/redbutton,
-					/obj/item/toy/eightball,
-					/obj/item/vending_refill/donksoft)
+	contains = list()
 	crate_name = "toy crate"
 	crate_type = /obj/structure/closet/crate/wooden
+
+/datum/supply_pack/costumes_toys/randomised/toys/generate()
+	. = ..()
+	var/the_toy
+	for(var/i in 1 to num_contained)
+		if(prob(50))
+			the_toy = pickweight(GLOB.arcade_prize_pool)
+		else
+			the_toy = pick(subtypesof(/obj/item/toy/plush))
+		new the_toy(.)
 
 /datum/supply_pack/costumes_toys/wizard
 	name = "Wizard Costume Crate"
