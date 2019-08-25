@@ -1,4 +1,5 @@
 /obj/item/melee/transforming/energy
+	icon = 'icons/obj/transforming_energy.dmi'
 	hitsound_on = 'sound/weapons/blade1.ogg'
 	heat = 3500
 	max_integrity = 200
@@ -138,6 +139,11 @@
 	w_class = WEIGHT_CLASS_NORMAL
 	sharpness = IS_SHARP
 	light_color = "#40ceff"
+
+/obj/item/melee/transforming/energy/sword/cyborg/saw/cyborg_unequip(mob/user)
+	if(!active)
+		return
+	transform_weapon(user, TRUE)
 
 /obj/item/melee/transforming/energy/sword/cyborg/saw/hit_reaction(mob/living/carbon/human/owner, atom/movable/hitby, attack_text = "the attack", final_block_chance = 0, damage = 0, attack_type = MELEE_ATTACK)
 	return 0

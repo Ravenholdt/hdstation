@@ -5,7 +5,7 @@
 #define SCANGATE_GUNS 			"Guns"
 #define SCANGATE_WANTED			"Wanted"
 #define SCANGATE_SPECIES		"Species"
-
+#define SCANGATE_NUTRITION		"Nutrition"
 
 /obj/machinery/scanner_gate
 	name = "scanner gate"
@@ -15,26 +15,29 @@
 	use_power = IDLE_POWER_USE
 	idle_power_usage = 50
 	circuit = /obj/item/circuitboard/machine/scanner_gate
+	ui_x = 600
+	ui_y = 400
+
 	var/scanline_timer
 	var/next_beep = 0 //avoids spam
-
 	var/locked = FALSE
 	var/scangate_mode = SCANGATE_NONE
 	var/disease_threshold = DISEASE_SEVERITY_MINOR
 	var/nanite_cloud = 0
 	var/datum/species/detect_species = /datum/species/human
 	var/reverse = FALSE //If true, signals if the scan returns false
+	var/detect_nutrition = NUTRITION_LEVEL_FAT
 
 /obj/machinery/scanner_gate/Initialize()
 	. = ..()
 	set_scanline("passive")
 
 /obj/machinery/scanner_gate/examine(mob/user)
-	..()
+	. = ..()
 	if(locked)
-		to_chat(user, "<span class='notice'>The control panel is ID-locked. Swipe a valid ID to unlock it.</span>")
+		. += "<span class='notice'>The control panel is ID-locked. Swipe a valid ID to unlock it.</span>"
 	else
-		to_chat(user, "<span class='notice'>The control panel is unlocked. Swipe an ID to lock it.</span>")
+		. += "<span class='notice'>The control panel is unlocked. Swipe an ID to lock it.</span>"
 
 /obj/machinery/scanner_gate/Crossed(atom/movable/AM)
 	..()
@@ -87,12 +90,12 @@
 				if(!R || (R.fields["criminal"] == "*Arrest*"))
 					beep = TRUE
 		if(SCANGATE_MINDSHIELD)
-			if(M.has_trait(TRAIT_MINDSHIELD))
+			if(HAS_TRAIT(M, TRAIT_MINDSHIELD))
 				beep = TRUE
 		if(SCANGATE_NANITES)
 			if(SEND_SIGNAL(M, COMSIG_HAS_NANITES))
 				if(nanite_cloud)
-					GET_COMPONENT_FROM(nanites, /datum/component/nanites, M)
+					var/datum/component/nanites/nanites = M.GetComponent(/datum/component/nanites)
 					if(nanites && nanites.cloud_id == nanite_cloud)
 						beep = TRUE
 				else
@@ -115,6 +118,14 @@
 				if(istype(I, /obj/item/gun))
 					beep = TRUE
 					break
+		if(SCANGATE_NUTRITION)
+			if(ishuman(M))
+				var/mob/living/carbon/human/H = M
+				if(H.nutrition <= detect_nutrition && detect_nutrition == NUTRITION_LEVEL_STARVING)
+					beep = TRUE
+				if(H.nutrition >= detect_nutrition && detect_nutrition == NUTRITION_LEVEL_FAT)
+					beep = TRUE
+
 	if(reverse)
 		beep = !beep
 	if(beep)
@@ -138,7 +149,7 @@
 /obj/machinery/scanner_gate/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = FALSE, datum/tgui/master_ui = null, datum/ui_state/state = GLOB.default_state)
 	SStgui.try_update_ui(user, src, ui_key, ui, force_open)
 	if(!ui)
-		ui = new(user, src, ui_key, "scanner_gate", name, 600, 400, master_ui, state)
+		ui = new(user, src, ui_key, "scanner_gate", name, ui_x, ui_y, master_ui, state)
 		ui.open()
 
 /obj/machinery/scanner_gate/ui_data()
@@ -148,6 +159,7 @@
 	data["nanite_cloud"] = nanite_cloud
 	data["disease_threshold"] = disease_threshold
 	data["target_species"] = initial(detect_species.name)
+	data["target_nutrition"] = detect_nutrition
 	return data
 
 /obj/machinery/scanner_gate/ui_act(action, params)
@@ -161,7 +173,8 @@
 																								SCANGATE_DISEASE,
 																								SCANGATE_GUNS,
 																								SCANGATE_WANTED,
-																								SCANGATE_SPECIES)
+																								SCANGATE_SPECIES,
+																								SCANGATE_NUTRITION)
 			if(new_mode)
 				scangate_mode = new_mode
 			. = TRUE
@@ -216,6 +229,16 @@
 					if("Zombie")
 						detect_species = /datum/species/zombie
 			. = TRUE
+		if("set_target_nutrition")
+			var/new_nutrition = input("Set target nutrition level","Scan Mode") as null|anything in list("Starving",
+																											"Obese")
+			if(new_nutrition)
+				switch(new_nutrition)
+					if("Starving")
+						detect_nutrition = NUTRITION_LEVEL_STARVING
+					if("Obese")
+						detect_nutrition = NUTRITION_LEVEL_FAT
+			. = TRUE
 
 #undef SCANGATE_NONE
 #undef SCANGATE_MINDSHIELD
@@ -224,3 +247,4 @@
 #undef SCANGATE_GUNS
 #undef SCANGATE_WANTED
 #undef SCANGATE_SPECIES
+#undef SCANGATE_NUTRITION

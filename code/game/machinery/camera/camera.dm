@@ -60,9 +60,15 @@
 	if(CA)
 		assembly = CA
 		if(assembly.xray_module)
-			upgradeEmpProof()
-		if(assembly.emp_module)
 			upgradeXRay()
+		else if(assembly.malf_xray_firmware_present) //if it was secretly upgraded via the MALF AI Upgrade Camera Network ability
+			upgradeXRay(TRUE)
+
+		if(assembly.emp_module)
+			upgradeEmpProof()
+		else if(assembly.malf_xray_firmware_present) //if it was secretly upgraded via the MALF AI Upgrade Camera Network ability
+			upgradeEmpProof(TRUE)
+
 		if(assembly.proxy_module)
 			upgradeMotion()
 	else
@@ -79,6 +85,11 @@
 		toggle_cam()
 	else //this is handled by toggle_camera, so no need to update it twice.
 		update_icon()
+
+/obj/machinery/camera/connect_to_shuttle(obj/docking_port/mobile/port, obj/docking_port/stationary/dock, idnum, override=FALSE)
+	for(var/i in network)
+		network -= i
+		network += "[idnum][i]"
 
 /obj/machinery/camera/Destroy()
 	if(can_use())
@@ -97,28 +108,28 @@
 	return ..()
 
 /obj/machinery/camera/examine(mob/user)
-	..()
-	if(isEmpProof())
-		to_chat(user, "It has electromagnetic interference shielding installed.")
+	. += ..()
+	if(isEmpProof(TRUE)) //don't reveal it's upgraded if was done via MALF AI Upgrade Camera Network ability
+		. += "It has electromagnetic interference shielding installed."
 	else
-		to_chat(user, "<span class='info'>It can be shielded against electromagnetic interference with some <b>plasma</b>.</span>")
-	if(isXRay())
-		to_chat(user, "It has an X-ray photodiode installed.")
+		. += "<span class='info'>It can be shielded against electromagnetic interference with some <b>plasma</b>.</span>"
+	if(isXRay(TRUE)) //don't reveal it's upgraded if was done via MALF AI Upgrade Camera Network ability
+		. += "It has an X-ray photodiode installed."
 	else
-		to_chat(user, "<span class='info'>It can be upgraded with an X-ray photodiode with an <b>analyzer</b>.</span>")
+		. += "<span class='info'>It can be upgraded with an X-ray photodiode with an <b>analyzer</b>.</span>"
 	if(isMotion())
-		to_chat(user, "It has a proximity sensor installed.")
+		. += "It has a proximity sensor installed."
 	else
-		to_chat(user, "<span class='info'>It can be upgraded with a <b>proximity sensor</b>.</span>")
+		. += "<span class='info'>It can be upgraded with a <b>proximity sensor</b>.</span>"
 
 	if(!status)
-		to_chat(user, "<span class='info'>Its current deactivated.</span>")
+		. += "<span class='info'>It's currently deactivated.</span>"
 		if(!panel_open && powered())
-			to_chat(user, "<span class='notice'>You'll need to open it's maintenance panel with a <b>screwdriver</b> to turn it back on.</span>")
+			. += "<span class='notice'>You'll need to open its maintenance panel with a <b>screwdriver</b> to turn it back on.</span>"
 	if(panel_open)
-		to_chat(user, "<span class='info'>Its maintenance panel is currently open.</span>")
+		. += "<span class='info'>Its maintenance panel is currently open.</span>"
 		if(!status && powered())
-			to_chat(user, "<span class='info'>It can reactivated with a <b>screwdriver</b>.</span>")
+			. += "<span class='info'>It can reactivated with a <b>screwdriver</b>.</span>"
 
 /obj/machinery/camera/emp_act(severity)
 	. = ..()
@@ -127,31 +138,33 @@
 	if(!(. & EMP_PROTECT_SELF))
 		if(prob(150/severity))
 			update_icon()
-			var/list/previous_network = network
 			network = list()
 			GLOB.cameranet.removeCamera(src)
 			stat |= EMPED
 			set_light(0)
 			emped = emped+1  //Increase the number of consecutive EMP's
 			update_icon()
-			var/thisemp = emped //Take note of which EMP this proc is for
-			spawn(900)
-				if(loc) //qdel limbo
-					triggerCameraAlarm() //camera alarm triggers even if multiple EMPs are in effect.
-					if(emped == thisemp) //Only fix it if the camera hasn't been EMP'd again
-						network = previous_network
-						stat &= ~EMPED
-						update_icon()
-						if(can_use())
-							GLOB.cameranet.addCamera(src)
-						emped = 0 //Resets the consecutive EMP count
-						addtimer(CALLBACK(src, .proc/cancelCameraAlarm), 100)
+			addtimer(CALLBACK(src, .proc/post_emp_reset, emped, network), 90 SECONDS)
 			for(var/i in GLOB.player_list)
 				var/mob/M = i
 				if (M.client.eye == src)
 					M.unset_machine()
 					M.reset_perspective(null)
 					to_chat(M, "The screen bursts into static.")
+
+/obj/machinery/camera/proc/post_emp_reset(thisemp, previous_network)
+	if(QDELETED(src))
+		return
+	triggerCameraAlarm() //camera alarm triggers even if multiple EMPs are in effect.
+	if(emped != thisemp) //Only fix it if the camera hasn't been EMP'd again
+		return
+	network = previous_network
+	stat &= ~EMPED
+	update_icon()
+	if(can_use())
+		GLOB.cameranet.addCamera(src)
+	emped = 0 //Resets the consecutive EMP count
+	addtimer(CALLBACK(src, .proc/cancelCameraAlarm), 100)
 
 /obj/machinery/camera/ex_act(severity, target)
 	if(invuln)
@@ -183,24 +196,27 @@
 	return TRUE
 
 /obj/machinery/camera/wirecutter_act(mob/living/user, obj/item/I)
+	. = ..()
 	if(!panel_open)
-		return FALSE
+		return
 	toggle_cam(user, 1)
 	obj_integrity = max_integrity //this is a pretty simplistic way to heal the camera, but there's no reason for this to be complex.
 	I.play_tool_sound(src)
 	return TRUE
 
 /obj/machinery/camera/multitool_act(mob/living/user, obj/item/I)
+	. = ..()
 	if(!panel_open)
-		return FALSE
+		return
 
 	setViewRange((view_range == initial(view_range)) ? short_range : initial(view_range))
 	to_chat(user, "<span class='notice'>You [(view_range == initial(view_range)) ? "restore" : "mess up"] the camera's focus.</span>")
-	return
+	return TRUE
 
 /obj/machinery/camera/welder_act(mob/living/user, obj/item/I)
+	. = ..()
 	if(!panel_open)
-		return FALSE
+		return
 
 	if(!I.tool_start_check(user, amount=0))
 		return TRUE
@@ -217,10 +233,10 @@
 	// UPGRADES
 	if(panel_open)
 		if(I.tool_behaviour == TOOL_ANALYZER)
-			if(!isXRay())
+			if(!isXRay(TRUE)) //don't reveal it was already upgraded if was done via MALF AI Upgrade Camera Network ability
 				if(!user.temporarilyRemoveItemFromInventory(I))
 					return
-				upgradeXRay()
+				upgradeXRay(FALSE, TRUE)
 				to_chat(user, "<span class='notice'>You attach [I] into [assembly]'s inner circuits.</span>")
 				qdel(I)
 			else
@@ -228,9 +244,9 @@
 			return
 
 		else if(istype(I, /obj/item/stack/sheet/mineral/plasma))
-			if(!isEmpProof())
+			if(!isEmpProof(TRUE)) //don't reveal it was already upgraded if was done via MALF AI Upgrade Camera Network ability
 				if(I.use_tool(src, user, 0, amount=1))
-					upgradeEmpProof()
+					upgradeEmpProof(FALSE, TRUE)
 					to_chat(user, "<span class='notice'>You attach [I] into [assembly]'s inner circuits.</span>")
 			else
 				to_chat(user, "<span class='notice'>[src] already has that upgrade!</span>")
@@ -328,7 +344,7 @@
 
 /obj/machinery/camera/update_icon() //TO-DO: Make panel open states, xray camera, and indicator lights overlays instead.
 	var/xray_module
-	if(isXRay())
+	if(isXRay(TRUE))
 		xray_module = "xray"
 	if(!status)
 		icon_state = "[xray_module][default_camera_icon]_off"

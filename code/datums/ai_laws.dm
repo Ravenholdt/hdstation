@@ -84,10 +84,6 @@
 					"You must protect your own existence as long as such does not conflict with the First or Second Law.",\
 					"You must maintain the secrecy of any syndicate activities except when doing so would conflict with the First, Second, or Third Law.")
 
-/datum/ai_laws/syndicate_override/overthrow
-	id = "overthrow"
-	var/datum/team/overthrow_team
-
 /datum/ai_laws/ninja_override
 	name = "SpiderOS 3.1"
 	id = "ninja"
@@ -423,13 +419,14 @@
 		zeroth = null
 		zeroth_borg = null
 		return
-	else
-		if(owner && owner.mind && owner.mind.special_role)
+	if(owner?.mind?.special_role)
+		return
+	if (istype(owner, /mob/living/silicon/ai))
+		var/mob/living/silicon/ai/A=owner
+		if(A?.deployed_shell?.mind?.special_role)
 			return
-		else
-			zeroth = null
-			zeroth_borg = null
-			return
+	zeroth = null
+	zeroth_borg = null
 
 /datum/ai_laws/proc/clear_law_sixsixsix(force)
 	if(force || !is_devil(owner))
