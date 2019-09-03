@@ -98,6 +98,7 @@
 	filling_color = "#FFD700"
 	tastes = list("fries" = 3, "salt" = 1)
 	foodtype = VEGETABLES | GRAIN | FRIED
+	dunkable = TRUE
 
 /obj/item/reagent_containers/food/snacks/tatortot
 	name = "tator tot"
@@ -107,6 +108,7 @@
 	filling_color = "FFD700"
 	tastes = list("potato" = 3, "valids" = 1)
 	foodtype = FRIED | VEGETABLES
+	dunkable = TRUE
 
 /obj/item/reagent_containers/food/snacks/soydope
 	name = "soy dope"
@@ -128,6 +130,7 @@
 	filling_color = "#FFD700"
 	tastes = list("fries" = 3, "cheese" = 1)
 	foodtype = VEGETABLES | GRAIN
+	dunkable = TRUE
 
 /obj/item/reagent_containers/food/snacks/badrecipe
 	name = "burned mess"
@@ -146,6 +149,7 @@
 	filling_color = "#FFA500"
 	tastes = list("carrots" = 3, "salt" = 1)
 	foodtype = VEGETABLES
+	dunkable = TRUE
 
 /obj/item/reagent_containers/food/snacks/candiedapple
 	name = "candied apple"
@@ -652,3 +656,13 @@
 	icon_state = "peachcanmaint"
 	trash = /obj/item/trash/can/food/peaches/maint
 	tastes = list("peaches" = 1, "tin" = 7)
+
+/obj/item/reagent_containers/food/snacks/crab_rangoon
+	name = "Crab Rangoon"
+	desc = "Has many names, like crab puffs, cheese wontons, crab dumplings? Whatever you call them, they're a fabulous blast of cream cheesy crab."
+	icon_state = "crabrangoon1"
+	list_reagents = list(/datum/reagent/consumable/nutriment = 10, /datum/reagent/consumable/nutriment/vitamin = 5)
+	filling_color = "#f2efdc"
+	w_class = WEIGHT_CLASS_SMALL
+	tastes = list("cream cheese" = 4, "crab" = 3, "crispiness" = 2)
+	foodtype = MEAT | DAIRY | GRAIN
