@@ -28,7 +28,7 @@
 
 /obj/machinery/processor/proc/process_food(datum/food_processor_process/recipe, atom/movable/what)
 	if (recipe.output && loc && !QDELETED(src))
-		for(var/i = 0, i < rating_amount, i++)
+		for(var/i = 0, i < (rating_amount * recipe.multiplier), i++)
 			new recipe.output(drop_location())
 	if (ismob(what))
 		var/mob/themob = what
@@ -94,7 +94,7 @@
 			to_chat(user, "<span class='warning'>You need a better grip to do that!</span>")
 			return
 		var/mob/living/pushed_mob = user.pulling
-		visible_message("<span class='warner'>[user] stuffs [pushed_mob] into [src]!</span>")
+		visible_message("<span class='warning'>[user] stuffs [pushed_mob] into [src]!</span>")
 		pushed_mob.forceMove(src)
 		user.stop_pulling()
 		return
@@ -104,7 +104,7 @@
 	processing = TRUE
 	user.visible_message("<span class='notice'>[user] turns on [src].</span>", \
 		"<span class='notice'>You turn on [src].</span>", \
-		"<span class='italics'>You hear a food processor.</span>")
+		"<span class='hear'>You hear a food processor.</span>")
 	playsound(src.loc, 'sound/machines/blender.ogg', 50, TRUE)
 	use_power(500)
 	var/total_time = 0

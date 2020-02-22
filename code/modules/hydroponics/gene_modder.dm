@@ -53,17 +53,18 @@
 			min_wchance = 0
 			min_wrate = 0
 
-/obj/machinery/plantgenes/update_icon()
-	..()
-	cut_overlays()
-	if((stat & (BROKEN|NOPOWER)))
+/obj/machinery/plantgenes/update_icon_state()
+	if((machine_stat & (BROKEN|NOPOWER)))
 		icon_state = "dnamod-off"
 	else
 		icon_state = "dnamod"
+
+/obj/machinery/plantgenes/update_overlays()
+	. = ..()
 	if(seed)
-		add_overlay("dnamod-dna")
+		. += "dnamod-dna"
 	if(panel_open)
-		add_overlay("dnamod-open")
+		. += "dnamod-open"
 
 /obj/machinery/plantgenes/attackby(obj/item/I, mob/user, params)
 	if(default_deconstruction_screwdriver(user, "dnamod", "dnamod", I))
@@ -248,7 +249,7 @@
 	popup.open()
 
 
-/obj/machinery/plantgenes/Topic(var/href, var/list/href_list)
+/obj/machinery/plantgenes/Topic(href, list/href_list)
 	if(..())
 		return
 	usr.set_machine(src)
@@ -407,7 +408,7 @@
 /obj/machinery/plantgenes/proc/repaint_seed()
 	if(!seed)
 		return
-	if(copytext(seed.name, 1, 13) == "experimental")
+	if(copytext(seed.name, 1, 13) == "experimental")//13 == length("experimental") + 1
 		return // Already modded name and icon
 	seed.name = "experimental " + seed.name
 	seed.icon_state = "seed-x"
@@ -424,7 +425,7 @@
 	name = "plant data disk"
 	desc = "A disk for storing plant genetic data."
 	icon_state = "datadisk_hydro"
-	materials = list(/datum/material/iron=30, /datum/material/glass=10)
+	custom_materials = list(/datum/material/iron=30, /datum/material/glass=10)
 	var/datum/plant_gene/gene
 	var/read_only = 0 //Well, it's still a floppy disk
 	obj_flags = UNIQUE_RENAME

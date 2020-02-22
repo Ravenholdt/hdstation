@@ -6,6 +6,7 @@
 	requires_power = FALSE
 	has_gravity = STANDARD_GRAVITY
 	valid_territory = FALSE
+	flags_1 = CAN_BE_DIRTY_1
 
 //Survival Capsule
 /obj/item/survivalcapsule
@@ -139,11 +140,10 @@
 	icon = 'icons/obj/lavaland/survival_pod.dmi'
 	icon_state = "sleeper"
 
-/obj/machinery/sleeper/survival_pod/update_icon()
-	if(state_open)
-		cut_overlays()
-	else
-		add_overlay("sleeper_cover")
+/obj/machinery/sleeper/survival_pod/update_overlays()
+	. = ..()
+	if(!state_open)
+		. += "sleeper_cover"
 
 //Lifeform Stasis Unit
 /obj/machinery/stasis/survival_pod
@@ -152,10 +152,11 @@
 	mattress_state = null
 	buckle_lying = 270
 
-/obj/machinery/stasis/survival_pod/play_power_sound()
-	return
+/obj/machinery/stasis/survival_pod/ComponentInitialize()
+	. = ..()
+	AddElement(/datum/element/update_icon_blocker)
 
-/obj/machinery/stasis/survival_pod/update_icon()
+/obj/machinery/stasis/survival_pod/play_power_sound()
 	return
 
 //Computer
@@ -173,7 +174,7 @@
 		return TRUE
 
 	user.visible_message("<span class='warning'>[user] disassembles [src].</span>",
-		"<span class='notice'>You start to disassemble [src]...</span>", "<span class='italics'>You hear clanking and banging noises.</span>")
+		"<span class='notice'>You start to disassemble [src]...</span>", "<span class='hear'>You hear clanking and banging noises.</span>")
 	if(I.use_tool(src, user, 20, volume=50))
 		new /obj/item/gps(loc)
 		qdel(src)
@@ -204,8 +205,9 @@
 	flags_1 = NODECONSTRUCT_1
 	var/empty = FALSE
 
-/obj/machinery/smartfridge/survival_pod/update_icon()
-	return
+/obj/machinery/smartfridge/survival_pod/ComponentInitialize()
+	. = ..()
+	AddElement(/datum/element/update_icon_blocker)
 
 /obj/machinery/smartfridge/survival_pod/Initialize(mapload)
 	. = ..()
@@ -253,7 +255,7 @@
 		return TRUE
 
 	user.visible_message("<span class='warning'>[user] disassembles [src].</span>",
-		"<span class='notice'>You start to disassemble [src]...</span>", "<span class='italics'>You hear clanking and banging noises.</span>")
+		"<span class='notice'>You start to disassemble [src]...</span>", "<span class='hear'>You hear clanking and banging noises.</span>")
 	if(I.use_tool(src, user, 20, volume=50))
 		deconstruct()
 	return TRUE
@@ -278,7 +280,7 @@
 
 //Signs
 /obj/structure/sign/mining
-	name = "nanotrasen mining corps sign"
+	name = "\improper Nanotrasen mining corps sign"
 	desc = "A sign of relief for weary miners, and a warning for would-be competitors to Nanotrasen's mining claims."
 	icon = 'icons/turf/walls/survival_pod_walls.dmi'
 	icon_state = "ntpod"

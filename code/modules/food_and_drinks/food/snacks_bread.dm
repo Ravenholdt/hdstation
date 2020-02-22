@@ -5,7 +5,10 @@
 	slices_num = 5
 	tastes = list("bread" = 10)
 	foodtype = GRAIN
-	dunkable = TRUE
+
+/obj/item/reagent_containers/food/snacks/store/bread/Initialize()
+	. = ..()
+	AddElement(/datum/element/dunkable, 10)
 
 /obj/item/reagent_containers/food/snacks/breadslice
 	icon = 'icons/obj/food/burgerbread.dmi'
@@ -16,7 +19,10 @@
 	slot_flags = ITEM_SLOT_HEAD
 	customfoodfilling = 0 //to avoid infinite bread-ception
 	foodtype = GRAIN
-	dunkable = TRUE
+
+/obj/item/reagent_containers/food/snacks/breadslice/Initialize()
+	. = ..()
+	AddElement(/datum/element/dunkable, 10)
 
 /obj/item/reagent_containers/food/snacks/store/bread/plain
 	name = "bread"
@@ -178,6 +184,7 @@
 	bitesize = 3
 	w_class = WEIGHT_CLASS_NORMAL
 	slot_flags = ITEM_SLOT_BACK|ITEM_SLOT_BELT
+	attack_verb = list("touche'd")
 	tastes = list("bread" = 1)
 	foodtype = GRAIN
 
@@ -226,16 +233,15 @@
 		qdel(fried)
 	else
 		fried.forceMove(src)
-		trash = fried
 
 /obj/item/reagent_containers/food/snacks/deepfryholder/Destroy()
-	if(trash)
-		QDEL_NULL(trash)
+	if(contents)
+		QDEL_LIST(contents)
 	. = ..()
 
 /obj/item/reagent_containers/food/snacks/deepfryholder/On_Consume(mob/living/eater)
-	if(trash)
-		QDEL_NULL(trash)
+	if(contents)
+		QDEL_LIST(contents)
 	..()
 
 /obj/item/reagent_containers/food/snacks/deepfryholder/proc/fry(cook_time = 30)
@@ -280,6 +286,7 @@
 	list_reagents = list(/datum/reagent/consumable/nutriment = 5)
 	bonus_reagents = list(/datum/reagent/consumable/nutriment = 1, /datum/reagent/consumable/nutriment/vitamin = 1)
 	tastes = list("butter", "exotic butter")
+	foodtype = GRAIN | DAIRY
 
 /obj/item/reagent_containers/food/snacks/butterdog/ComponentInitialize()
 	. = ..()

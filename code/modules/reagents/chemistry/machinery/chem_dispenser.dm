@@ -23,7 +23,7 @@
 	resistance_flags = FIRE_PROOF | ACID_PROOF
 	circuit = /obj/item/circuitboard/machine/chem_dispenser
 	ui_x = 565
-	ui_y = 550
+	ui_y = 620
 
 	var/obj/item/stock_parts/cell/cell
 	var/powerefficiency = 0.1
@@ -70,7 +70,7 @@
 		/datum/reagent/ammonia,
 		/datum/reagent/ash,
 		/datum/reagent/diethylamine,
-		/datum/reagent/oil,
+		/datum/reagent/fuel/oil,
 		/datum/reagent/saltpetre
 	)
 	var/list/emagged_reagents = list(
@@ -129,19 +129,17 @@
 	if(working_state)
 		flick(working_state,src)
 
-/obj/machinery/chem_dispenser/power_change()
-	..()
+/obj/machinery/chem_dispenser/update_icon_state()
 	icon_state = "[(nopower_state && !powered()) ? nopower_state : initial(icon_state)]"
 
-/obj/machinery/chem_dispenser/update_icon()
-	cut_overlays()
+/obj/machinery/chem_dispenser/update_overlays()
+	. = ..()
 	if(has_panel_overlay && panel_open)
-		add_overlay(mutable_appearance(icon, "[initial(icon_state)]_panel-o"))
+		. += mutable_appearance(icon, "[initial(icon_state)]_panel-o")
 
 	if(beaker)
 		beaker_overlay = display_beaker()
-		add_overlay(beaker_overlay)
-
+		. += beaker_overlay
 
 
 /obj/machinery/chem_dispenser/emag_act(mob/user)
@@ -253,7 +251,7 @@
 			if(!is_operational() || recording_recipe)
 				return
 			var/amount = text2num(params["amount"])
-			if(beaker && amount in beaker.possible_transfer_amounts)
+			if(beaker && (amount in beaker.possible_transfer_amounts))
 				beaker.reagents.remove_all(amount)
 				work_animation()
 				. = TRUE
@@ -310,7 +308,7 @@
 				for(var/reagent in recording_recipe)
 					var/reagent_id = GLOB.name2reagent[translate_legacy_chem_id(reagent)]
 					if(!dispensable_reagents.Find(reagent_id))
-						visible_message("<span class='warning'>[src] buzzes.</span>", "<span class='italics'>You hear a faint buzz.</span>")
+						visible_message("<span class='warning'>[src] buzzes.</span>", "<span class='hear'>You hear a faint buzz.</span>")
 						to_chat(usr, "<span class ='danger'>[src] cannot find <b>[reagent]</b>!</span>")
 						playsound(src, 'sound/machines/buzz-two.ogg', 50, TRUE)
 						return
@@ -384,14 +382,13 @@
 	powerefficiency = round(newpowereff, 0.01)
 
 /obj/machinery/chem_dispenser/proc/replace_beaker(mob/living/user, obj/item/reagent_containers/new_beaker)
+	if(!user)
+		return FALSE
 	if(beaker)
-		beaker.forceMove(drop_location())
-		if(user && Adjacent(user) && !issiliconoradminghost(user))
-			user.put_in_hands(beaker)
+		user.put_in_hands(beaker)
+		beaker = null
 	if(new_beaker)
 		beaker = new_beaker
-	else
-		beaker = null
 	update_icon()
 	return TRUE
 
@@ -403,9 +400,10 @@
 	return ..()
 
 /obj/machinery/chem_dispenser/AltClick(mob/living/user)
-	..()
-	if(istype(user) && user.canUseTopic(src, BE_CLOSE, FALSE, NO_TK))
-		replace_beaker(user)
+	. = ..()
+	if(!can_interact(user) || !user.canUseTopic(src, BE_CLOSE, FALSE, NO_TK))
+		return
+	replace_beaker(user)
 
 /obj/machinery/chem_dispenser/drinks/Initialize()
 	. = ..()
@@ -464,6 +462,7 @@
 		/datum/reagent/consumable/pwr_game,
 		/datum/reagent/consumable/shamblers,
 		/datum/reagent/consumable/sugar,
+		/datum/reagent/consumable/pineapplejuice,
 		/datum/reagent/consumable/orangejuice,
 		/datum/reagent/consumable/grenadine,
 		/datum/reagent/consumable/limejuice,
@@ -519,6 +518,7 @@
 		/datum/reagent/consumable/ethanol/hcider,
 		/datum/reagent/consumable/ethanol/creme_de_menthe,
 		/datum/reagent/consumable/ethanol/creme_de_cacao,
+		/datum/reagent/consumable/ethanol/creme_de_coconut,
 		/datum/reagent/consumable/ethanol/triple_sec,
 		/datum/reagent/consumable/ethanol/sake,
 		/datum/reagent/consumable/ethanol/applejack
@@ -649,7 +649,7 @@
 		/datum/reagent/ammonia,
 		/datum/reagent/ash,
 		/datum/reagent/diethylamine,
-		/datum/reagent/oil,
+		/datum/reagent/fuel/oil,
 		/datum/reagent/saltpetre,
 		/datum/reagent/medicine/mine_salve,
 		/datum/reagent/medicine/morphine,

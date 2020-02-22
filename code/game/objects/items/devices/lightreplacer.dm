@@ -152,7 +152,7 @@
 		ReplaceLight(target, user)
 	to_chat(user, status_string())
 
-/obj/item/lightreplacer/update_icon()
+/obj/item/lightreplacer/update_icon_state()
 	icon_state = "lightreplacer[(obj_flags & EMAGGED ? 1 : 0)]"
 
 /obj/item/lightreplacer/proc/status_string()
@@ -165,7 +165,7 @@
 
 // Negative numbers will subtract
 /obj/item/lightreplacer/proc/AddUses(amount = 1)
-	uses = CLAMP(uses + amount, 0, max_uses)
+	uses = clamp(uses + amount, 0, max_uses)
 
 /obj/item/lightreplacer/proc/AddShards(amount = 1, user)
 	bulb_shards += amount
@@ -212,7 +212,7 @@
 			return
 
 		else
-			to_chat(U, "\The [src]'s refill light blinks red.")
+			to_chat(U, "<span class='warning'>\The [src]'s refill light blinks red.</span>")
 			return
 	else
 		to_chat(U, "<span class='warning'>There is a working [target.fitting] already inserted!</span>")
@@ -250,7 +250,7 @@
 			ReplaceLight(A, U)
 
 	if(!used)
-		to_chat(U, "\The [src]'s refill light blinks red.")
+		to_chat(U, "<span class='warning'>\The [src]'s refill light blinks red.</span>")
 
 /obj/item/lightreplacer/proc/janicart_insert(mob/user, obj/structure/janitorialcart/J)
 	J.put_in_cart(src, user)

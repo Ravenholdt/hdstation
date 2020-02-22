@@ -2,7 +2,7 @@
 
 /obj/item/electronics/firealarm
 	name = "fire alarm electronics"
-	custom_price = 5
+	custom_price = 50
 	desc = "A fire alarm circuit. Can handle heat levels up to 40 degrees celsius."
 
 /obj/item/wallframe/firealarm
@@ -18,7 +18,7 @@
 	icon = 'icons/obj/monitors.dmi'
 	icon_state = "fire0"
 	max_integrity = 250
-	integrity_failure = 100
+	integrity_failure = 0.4
 	armor = list("melee" = 0, "bullet" = 0, "laser" = 0, "energy" = 0, "bomb" = 0, "bio" = 100, "rad" = 100, "fire" = 90, "acid" = 30)
 	use_power = IDLE_POWER_USE
 	idle_power_usage = 2
@@ -52,47 +52,43 @@
 	LAZYREMOVE(myarea.firealarms, src)
 	return ..()
 
-/obj/machinery/firealarm/power_change()
-	..()
-	update_icon()
-
-/obj/machinery/firealarm/update_icon()
-	cut_overlays()
-	SSvis_overlays.remove_vis_overlay(src, managed_vis_overlays)
-
+/obj/machinery/firealarm/update_icon_state()
 	if(panel_open)
 		icon_state = "fire_b[buildstage]"
 		return
 
-	if(stat & BROKEN)
+	if(machine_stat & BROKEN)
 		icon_state = "firex"
 		return
 
 	icon_state = "fire0"
 
-	if(stat & NOPOWER)
+/obj/machinery/firealarm/update_overlays()
+	. = ..()
+	SSvis_overlays.remove_vis_overlay(src, managed_vis_overlays)
+
+	if(machine_stat & NOPOWER)
 		return
 
-	add_overlay("fire_overlay")
+	. += "fire_overlay"
 
 	if(is_station_level(z))
-		add_overlay("fire_[GLOB.security_level]")
+		. += "fire_[GLOB.security_level]"
 		SSvis_overlays.add_vis_overlay(src, icon, "fire_[GLOB.security_level]", ABOVE_LIGHTING_LAYER, ABOVE_LIGHTING_PLANE, dir)
 	else
-		add_overlay("fire_[SEC_LEVEL_GREEN]")
+		. += "fire_[SEC_LEVEL_GREEN]"
 		SSvis_overlays.add_vis_overlay(src, icon, "fire_[SEC_LEVEL_GREEN]", ABOVE_LIGHTING_LAYER, ABOVE_LIGHTING_PLANE, dir)
 
-	var/area/A = src.loc
-	A = A.loc
+	var/area/A = get_area(src)
 
 	if(!detecting || !A.fire)
-		add_overlay("fire_off")
+		. += "fire_off"
 		SSvis_overlays.add_vis_overlay(src, icon, "fire_off", ABOVE_LIGHTING_LAYER, ABOVE_LIGHTING_PLANE, dir)
 	else if(obj_flags & EMAGGED)
-		add_overlay("fire_emagged")
+		. += "fire_emagged"
 		SSvis_overlays.add_vis_overlay(src, icon, "fire_emagged", ABOVE_LIGHTING_LAYER, ABOVE_LIGHTING_PLANE, dir)
 	else
-		add_overlay("fire_on")
+		. += "fire_on"
 		SSvis_overlays.add_vis_overlay(src, icon, "fire_on", ABOVE_LIGHTING_LAYER, ABOVE_LIGHTING_PLANE, dir)
 
 /obj/machinery/firealarm/emp_act(severity)
@@ -115,7 +111,7 @@
 	playsound(src, "sparks", 50, TRUE)
 
 /obj/machinery/firealarm/temperature_expose(datum/gas_mixture/air, temperature, volume)
-	if((temperature > T0C + 200 || temperature < BODYTEMP_COLD_DAMAGE_LIMIT) && (last_alarm+FIREALARM_COOLDOWN < world.time) && !(obj_flags & EMAGGED) && detecting && !stat)
+	if((temperature > T0C + 200 || temperature < BODYTEMP_COLD_DAMAGE_LIMIT) && (last_alarm+FIREALARM_COOLDOWN < world.time) && !(obj_flags & EMAGGED) && detecting && !machine_stat)
 		alarm()
 	..()
 
@@ -220,9 +216,9 @@
 										"<span class='notice'>You start prying out the circuit...</span>")
 					if(W.use_tool(src, user, 20, volume=50))
 						if(buildstage == 1)
-							if(stat & BROKEN)
+							if(machine_stat & BROKEN)
 								to_chat(user, "<span class='notice'>You remove the destroyed circuit.</span>")
-								stat &= ~BROKEN
+								machine_stat &= ~BROKEN
 							else
 								to_chat(user, "<span class='notice'>You pry out the circuit.</span>")
 								new /obj/item/electronics/firealarm(user.loc)
@@ -276,7 +272,7 @@
 /obj/machinery/firealarm/take_damage(damage_amount, damage_type = BRUTE, damage_flag = 0, sound_effect = 1, attack_dir)
 	. = ..()
 	if(.) //damage received
-		if(obj_integrity > 0 && !(stat & BROKEN) && buildstage != 0)
+		if(obj_integrity > 0 && !(machine_stat & BROKEN) && buildstage != 0)
 			if(prob(33))
 				alarm()
 
@@ -286,15 +282,16 @@
 	..()
 
 /obj/machinery/firealarm/obj_break(damage_flag)
-	if(!(stat & BROKEN) && !(flags_1 & NODECONSTRUCT_1) && buildstage != 0) //can't break the electronics if there isn't any inside.
+	if(buildstage == 0) //can't break the electronics if there isn't any inside.
+		return
+	. = ..()
+	if(.)
 		LAZYREMOVE(myarea.firealarms, src)
-		stat |= BROKEN
-		update_icon()
 
 /obj/machinery/firealarm/deconstruct(disassembled = TRUE)
 	if(!(flags_1 & NODECONSTRUCT_1))
 		new /obj/item/stack/sheet/metal(loc, 1)
-		if(!(stat & BROKEN))
+		if(!(machine_stat & BROKEN))
 			var/obj/item/I = new /obj/item/electronics/firealarm(loc)
 			if(!disassembled)
 				I.obj_integrity = I.max_integrity * 0.5
@@ -322,7 +319,7 @@
 	var/static/party_overlay
 
 /obj/machinery/firealarm/partyalarm/reset()
-	if (stat & (NOPOWER|BROKEN))
+	if (machine_stat & (NOPOWER|BROKEN))
 		return
 	var/area/A = get_area(src)
 	if (!A || !A.party)
@@ -331,7 +328,7 @@
 	A.cut_overlay(party_overlay)
 
 /obj/machinery/firealarm/partyalarm/alarm()
-	if (stat & (NOPOWER|BROKEN))
+	if (machine_stat & (NOPOWER|BROKEN))
 		return
 	var/area/A = get_area(src)
 	if (!A || A.party || A.name == "Space")

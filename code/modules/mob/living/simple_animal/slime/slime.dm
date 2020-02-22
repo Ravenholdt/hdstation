@@ -12,9 +12,12 @@
 	harm_intent_damage = 5
 	icon_living = "grey baby slime"
 	icon_dead = "grey baby slime dead"
-	response_help  = "pets"
-	response_disarm = "shoos"
-	response_harm   = "stomps on"
+	response_help_continuous = "pets"
+	response_help_simple = "pet"
+	response_disarm_continuous = "shoos"
+	response_disarm_simple = "shoo"
+	response_harm_continuous = "stomps on"
+	response_harm_simple = "stomp on"
 	emote_see = list("jiggles", "bounces in place")
 	speak_emote = list("blorbles")
 	bubble_icon = "slime"
@@ -25,7 +28,6 @@
 	maxHealth = 150
 	health = 150
 	healable = 0
-	gender = NEUTER
 
 	see_in_dark = 8
 
@@ -64,8 +66,6 @@
 	var/mutator_used = FALSE //So you can't shove a dozen mutators into a single slime
 	var/force_stasis = FALSE
 
-	do_footstep = TRUE
-
 	var/static/regex/slime_name_regex = new("\\w+ (baby|adult) slime \\(\\d+\\)")
 	///////////TIME FOR SUBSPECIES
 
@@ -102,11 +102,16 @@
 	set_colour(new_colour)
 	. = ..()
 	set_nutrition(700)
+	AddComponent(/datum/component/footstep, FOOTSTEP_MOB_SLIME, 7.5)
 
 /mob/living/simple_animal/slime/Destroy()
 	for (var/A in actions)
 		var/datum/action/AC = A
 		AC.Remove(src)
+	Target = null
+	Leader = null
+	Friends.Cut()
+	speech_buffer.Cut()
 	return ..()
 
 /mob/living/simple_animal/slime/proc/set_colour(new_colour)
@@ -162,34 +167,31 @@
 	update_health_hud()
 
 /mob/living/simple_animal/slime/update_health_hud()
-	if(hud_used)
-		var/severity = 0
-		var/healthpercent = (health/maxHealth) * 100
+	var/severity = 0
+	var/healthpercent = (health/maxHealth) * 100
+	if(hud_used?.healthdoll)
 		switch(healthpercent)
 			if(100 to INFINITY)
-				hud_used.healths.icon_state = "slime_health0"
+				severity = 0
 			if(80 to 100)
-				hud_used.healths.icon_state = "slime_health1"
 				severity = 1
 			if(60 to 80)
-				hud_used.healths.icon_state = "slime_health2"
 				severity = 2
 			if(40 to 60)
-				hud_used.healths.icon_state = "slime_health3"
 				severity = 3
 			if(20 to 40)
-				hud_used.healths.icon_state = "slime_health4"
 				severity = 4
-			if(1 to 20)
-				hud_used.healths.icon_state = "slime_health5"
+			if(10 to 20)
 				severity = 5
-			else
-				hud_used.healths.icon_state = "slime_health7"
+			if(1 to 20)
 				severity = 6
-		if(severity > 0)
-			overlay_fullscreen("brute", /obj/screen/fullscreen/brute, severity)
-		else
-			clear_fullscreen("brute")
+			else
+				severity = 7
+		hud_used.healthdoll.icon_state = "slime_health[severity]"
+	if(severity > 0)
+		overlay_fullscreen("brute", /obj/screen/fullscreen/brute, severity)
+	else
+		clear_fullscreen("brute")
 
 /mob/living/simple_animal/slime/adjust_bodytemperature()
 	. = ..()
@@ -250,7 +252,7 @@
 		amount = -abs(amount)
 	return ..() //Heals them
 
-/mob/living/simple_animal/slime/bullet_act(obj/item/projectile/Proj)
+/mob/living/simple_animal/slime/bullet_act(obj/projectile/Proj)
 	attacked += 10
 	if((Proj.damage_type == BURN))
 		adjustBruteLoss(-abs(Proj.damage)) //fire projectiles heals slimes.
@@ -272,7 +274,7 @@
 			Feedon(Food)
 	return ..()
 
-/mob/living/simple_animal/slime/doUnEquip(obj/item/W)
+/mob/living/simple_animal/slime/doUnEquip(obj/item/I, force, newloc, no_move, invdrop = TRUE, silent = FALSE)
 	return
 
 /mob/living/simple_animal/slime/start_pulling(atom/movable/AM, state, force = move_force, supress_message = FALSE)
@@ -490,14 +492,17 @@
 		Feedstop(silent = TRUE) //we unbuckle the slime from the mob it latched onto.
 
 	SStun = world.time + rand(20,60)
-	spawn(0)
-		mobility_flags &= ~MOBILITY_MOVE
-		if(user)
-			step_away(src,user,15)
-		sleep(3)
-		if(user)
-			step_away(src,user,15)
-		update_mobility()
+
+	mobility_flags &= ~MOBILITY_MOVE
+	if(user)
+		step_away(src,user,15)
+
+	addtimer(CALLBACK(src, .proc/slime_move, user), 3)
+
+/mob/living/simple_animal/slime/proc/slime_move(mob/user)
+	if(user)
+		step_away(src,user,15)
+	update_mobility()
 
 /mob/living/simple_animal/slime/pet
 	docile = 1
