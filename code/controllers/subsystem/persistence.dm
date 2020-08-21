@@ -19,6 +19,7 @@ SUBSYSTEM_DEF(persistence)
 	var/list/picture_logging_information = list()
 	var/list/obj/structure/sign/picture_frame/photo_frames
 	var/list/obj/item/storage/photo_album/photo_albums
+	var/list/obj/structure/sign/painting/painting_frames = list()
 	var/list/paintings = list()
 
 /datum/controller/subsystem/persistence/Initialize()
@@ -35,7 +36,7 @@ SUBSYSTEM_DEF(persistence)
 	return ..()
 
 /datum/controller/subsystem/persistence/proc/LoadPoly()
-	for(var/mob/living/simple_animal/parrot/Poly/P in GLOB.alive_mob_list)
+	for(var/mob/living/simple_animal/parrot/poly/P in GLOB.alive_mob_list)
 		twitterize(P.speech_buffer, "polytalk")
 		break //Who's been duping the bird?!
 
@@ -179,6 +180,7 @@ SUBSYSTEM_DEF(persistence)
 		CollectAntagReputation()
 	SaveRandomizedRecipes()
 	SavePaintings()
+	SaveScars()
 
 /datum/controller/subsystem/persistence/proc/GetPhotoAlbums()
 	var/album_path = file("data/photo_albums.json")
@@ -341,15 +343,19 @@ SUBSYSTEM_DEF(persistence)
 		var/datum/chemical_reaction/randomized/R = new randomized_type
 		var/loaded = FALSE
 		if(R.persistent && json)
-			var/list/recipe_data = json[R.type]
+			var/list/recipe_data = json["[R.type]"]
 			if(recipe_data)
 				if(R.LoadOldRecipe(recipe_data) && (daysSince(R.created) <= R.persistence_period))
 					loaded = TRUE
 		if(!loaded) //We do not have information for whatever reason, just generate new one
+			if(R.persistent)
+				log_game("Resetting persistent [randomized_type] random recipe.")
 			R.GenerateRecipe()
 
 		if(!R.HasConflicts()) //Might want to try again if conflicts happened in the future.
 			add_chemical_reaction(R)
+		else
+			log_game("Randomized recipe [randomized_type] resulted in conflicting recipes.")
 
 /datum/controller/subsystem/persistence/proc/SaveRandomizedRecipes()
 	var/json_file = file("data/RandomizedChemRecipes.json")
@@ -377,13 +383,25 @@ SUBSYSTEM_DEF(persistence)
 	if(fexists(json_file))
 		paintings = json_decode(file2text(json_file))
 
-	for(var/obj/structure/sign/painting/P in world)
+	for(var/obj/structure/sign/painting/P in painting_frames)
 		P.load_persistent()
 
 /datum/controller/subsystem/persistence/proc/SavePaintings()
-	for(var/obj/structure/sign/painting/P in world)
+	for(var/obj/structure/sign/painting/P in painting_frames)
 		P.save_persistent()
 
 	var/json_file = file("data/paintings.json")
 	fdel(json_file)
 	WRITE_FILE(json_file, json_encode(paintings))
+
+/datum/controller/subsystem/persistence/proc/SaveScars()
+	for(var/i in GLOB.joined_player_list)
+		var/mob/living/carbon/human/ending_human = get_mob_by_ckey(i)
+		if(!istype(ending_human) || !ending_human.mind || !ending_human.client || !ending_human.client.prefs || !ending_human.client.prefs.persistent_scars)
+			continue
+
+		var/mob/living/carbon/human/original_human = ending_human.mind.original_character
+		if(!original_human || original_human.stat == DEAD || !original_human.all_scars || !(original_human == ending_human))
+			original_human.save_persistent_scars(TRUE)
+		else
+			original_human.save_persistent_scars()

@@ -51,6 +51,10 @@
 		return FALSE
 	if(holidayID && (!SSevents.holidays || !SSevents.holidays[holidayID]))
 		return FALSE
+	if(EMERGENCY_ESCAPED_OR_ENDGAMED)
+		return FALSE
+	if(ispath(typepath, /datum/round_event/ghost_role) && GHOSTROLE_MIDROUND_EVENT)
+		return FALSE
 	return TRUE
 
 /datum/round_event_control/proc/preRunEvent()
@@ -166,6 +170,7 @@
 //Do not override this proc, instead use the appropiate procs.
 //This proc will handle the calls to the appropiate procs.
 /datum/round_event/process()
+	SHOULD_NOT_OVERRIDE(TRUE)
 	if(!processing)
 		return
 

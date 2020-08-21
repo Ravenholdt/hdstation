@@ -1,6 +1,8 @@
 /obj/item/reagent_containers/food/snacks/meat
 	var/subjectname = ""
 	var/subjectjob = null
+	custom_materials = list(/datum/material/meat = MINERAL_MATERIAL_AMOUNT * 4)
+	material_flags = MATERIAL_NO_EFFECTS //Remove this once we refactor food, prevents meat literaly being eaten twice
 
 /obj/item/reagent_containers/food/snacks/meat/slab
 	name = "meat"
@@ -38,6 +40,7 @@
 	slice_path = /obj/item/reagent_containers/food/snacks/meat/rawcutlet/plain/human
 	tastes = list("tender meat" = 1)
 	foodtype = MEAT | RAW | GROSS
+	value = FOOD_MEAT_HUMAN
 
 /obj/item/reagent_containers/food/snacks/meat/slab/human/initialize_slice(obj/item/reagent_containers/food/snacks/meat/rawcutlet/plain/human/slice, reagents_per_slice)
 	..()
@@ -65,6 +68,7 @@
 	filling_color = "#00FFFF"
 	tastes = list("slime" = 1, "jelly" = 1)
 	foodtype = MEAT | RAW | TOXIC
+	value = FOOD_MEAT_MUTANT_RARE
 
 /obj/item/reagent_containers/food/snacks/meat/slab/human/mutant/golem
 	icon_state = "golemmeat"
@@ -73,6 +77,7 @@
 	filling_color = "#A9A9A9"
 	tastes = list("rock" = 1)
 	foodtype = MEAT | RAW | GROSS
+	value = FOOD_MEAT_MUTANT_RARE
 
 /obj/item/reagent_containers/food/snacks/meat/slab/human/mutant/golem/adamantine
 	icon_state = "agolemmeat"
@@ -86,6 +91,7 @@
 	filling_color = "#6B8E23"
 	tastes = list("meat" = 4, "scales" = 1)
 	foodtype = MEAT | RAW
+	value = FOOD_MEAT_MUTANT
 
 /obj/item/reagent_containers/food/snacks/meat/slab/human/mutant/plant
 	icon_state = "plantmeat"
@@ -93,6 +99,7 @@
 	filling_color = "#E9967A"
 	tastes = list("salad" = 1, "wood" = 1)
 	foodtype = VEGETABLES
+	value = FOOD_MEAT_MUTANT_RARE
 
 /obj/item/reagent_containers/food/snacks/meat/slab/human/mutant/shadow
 	icon_state = "shadowmeat"
@@ -100,6 +107,7 @@
 	filling_color = "#202020"
 	tastes = list("darkness" = 1, "meat" = 1)
 	foodtype = MEAT | RAW
+	value = FOOD_MEAT_MUTANT_RARE
 
 /obj/item/reagent_containers/food/snacks/meat/slab/human/mutant/fly
 	icon_state = "flymeat"
@@ -107,6 +115,7 @@
 	list_reagents = list(/datum/reagent/consumable/nutriment = 3, /datum/reagent/uranium = 3)
 	tastes = list("maggots" = 1, "the inside of a reactor" = 1)
 	foodtype = MEAT | RAW | GROSS
+	value = FOOD_MEAT_MUTANT
 
 /obj/item/reagent_containers/food/snacks/meat/slab/human/mutant/moth
 	icon_state = "mothmeat"
@@ -114,6 +123,7 @@
 	filling_color = "#BF896B"
 	tastes = list("dust" = 1, "powder" = 1, "meat" = 2)
 	foodtype = MEAT | RAW
+	value = FOOD_MEAT_MUTANT
 
 /obj/item/reagent_containers/food/snacks/meat/slab/human/mutant/skeleton
 	name = "bone"
@@ -123,6 +133,7 @@
 	tastes = list("bone" = 1)
 	slice_path = null  //can't slice a bone into cutlets
 	foodtype = GROSS
+	value = FOOD_MEAT_MUTANT_RARE
 
 /obj/item/reagent_containers/food/snacks/meat/slab/human/mutant/zombie
 	name = " meat (rotten)"
@@ -139,6 +150,7 @@
 	list_reagents = list(/datum/reagent/consumable/liquidelectricity = 3)
 	tastes = list("pure electricity" = 2, "meat" = 1)
 	foodtype = RAW | MEAT | TOXIC
+	value = FOOD_MEAT_MUTANT
 
 ////////////////////////////////////// OTHER MEATS ////////////////////////////////////////////////////////
 

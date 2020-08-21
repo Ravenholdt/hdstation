@@ -45,11 +45,10 @@
 	var/height = 11
 	var/list/grid
 	var/canvas_color = "#ffffff" //empty canvas color
-	var/ui_x = 400
-	var/ui_y = 400
 	var/used = FALSE
 	var/painting_name //Painting name, this is set after framing.
 	var/finalized = FALSE //Blocks edits
+	var/author_ckey
 	var/icon_generated = FALSE
 	var/icon/generated_icon
 
@@ -74,12 +73,16 @@
 	. = ..()
 	ui_interact(user)
 
-/obj/item/canvas/ui_interact(mob/user, ui_key = "main", datum/tgui/ui = null, force_open = FALSE, \
-										datum/tgui/master_ui = null, datum/ui_state/state = GLOB.default_state)
+/obj/item/canvas/ui_state(mob/user)
+	if(finalized)
+		return GLOB.physical_obscured_state
+	else
+		return GLOB.default_state
 
-	ui = SStgui.try_update_ui(user, src, ui_key, ui, force_open)
+/obj/item/canvas/ui_interact(mob/user, datum/tgui/ui)
+	ui = SStgui.try_update_ui(user, src, ui)
 	if(!ui)
-		ui = new(user, src, ui_key, "canvas", name, ui_x, ui_y, master_ui, state)
+		ui = new(user, src, "Canvas", name)
 		ui.set_autoupdate(FALSE)
 		ui.open()
 
@@ -123,6 +126,7 @@
 
 /obj/item/canvas/proc/finalize(mob/user)
 	finalized = TRUE
+	author_ckey = user.ckey
 	generate_proper_overlay()
 	try_rename(user)
 
@@ -184,34 +188,28 @@
 		painting_name = new_name
 		SStgui.update_uis(src)
 
-/obj/item/canvas/nineteenXnineteen
+/obj/item/canvas/nineteen_nineteen
 	icon_state = "19x19"
 	width = 19
 	height = 19
-	ui_x = 600
-	ui_y = 600
 	pixel_x = 6
 	pixel_y = 9
 	framed_offset_x = 8
 	framed_offset_y = 9
 
-/obj/item/canvas/twentythreeXnineteen
+/obj/item/canvas/twentythree_nineteen
 	icon_state = "23x19"
 	width = 23
 	height = 19
-	ui_x = 800
-	ui_y = 600
 	pixel_x = 4
 	pixel_y = 10
 	framed_offset_x = 6
 	framed_offset_y = 8
 
-/obj/item/canvas/twentythreeXtwentythree
+/obj/item/canvas/twentythree_twentythree
 	icon_state = "23x23"
 	width = 23
 	height = 23
-	ui_x = 800
-	ui_y = 800
 	pixel_x = 5
 	pixel_y = 9
 	framed_offset_x = 5
@@ -221,7 +219,7 @@
 	name = "painting frame"
 	desc = "The perfect showcase for your favorite deathtrap memories."
 	icon = 'icons/obj/decals.dmi'
-	custom_materials = null
+	custom_materials = list(/datum/material/wood = 2000)
 	flags_1 = 0
 	icon_state = "frame-empty"
 	result_path = /obj/structure/sign/painting
@@ -231,18 +229,24 @@
 	desc = "Art or \"Art\"? You decide."
 	icon = 'icons/obj/decals.dmi'
 	icon_state = "frame-empty"
+	custom_materials = list(/datum/material/wood = 2000)
 	buildable_sign = FALSE
 	var/obj/item/canvas/C
 	var/persistence_id
 
 /obj/structure/sign/painting/Initialize(mapload, dir, building)
 	. = ..()
+	SSpersistence.painting_frames += src
 	AddComponent(/datum/component/art, 20)
 	if(dir)
 		setDir(dir)
 	if(building)
 		pixel_x = (dir & 3)? 0 : (dir == 4 ? -30 : 30)
 		pixel_y = (dir & 3)? (dir ==1 ? -30 : 30) : 0
+
+/obj/structure/sign/painting/Destroy()
+	. = ..()
+	SSpersistence.painting_frames -= src
 
 /obj/structure/sign/painting/attackby(obj/item/I, mob/user, params)
 	if(!C && istype(I, /obj/item/canvas))
@@ -255,7 +259,7 @@
 /obj/structure/sign/painting/examine(mob/user)
 	. = ..()
 	if(C)
-		C.ui_interact(user,state = GLOB.physical_obscured_state)
+		C.ui_interact(user)
 
 /obj/structure/sign/painting/wirecutter_act(mob/living/user, obj/item/I)
 	. = ..()
@@ -281,7 +285,7 @@
 /obj/structure/sign/painting/update_icon_state()
 	. = ..()
 	if(C && C.generated_icon)
-		icon_state = null
+		icon_state = "frame-overlay"
 	else
 		icon_state = "frame-empty"
 
@@ -305,6 +309,7 @@
 		return
 	var/list/chosen = pick(SSpersistence.paintings[persistence_id])
 	var/title = chosen["title"]
+	var/author = chosen["ckey"]
 	var/png = "data/paintings/[persistence_id]/[chosen["md5"]].png"
 	if(!fexists(png))
 		stack_trace("Persistent painting [chosen["md5"]].png was not found in [persistence_id] directory.")
@@ -323,6 +328,7 @@
 	new_canvas.icon_generated = TRUE
 	new_canvas.finalized = TRUE
 	new_canvas.painting_name = title
+	new_canvas.author_ckey = author
 	C = new_canvas
 	update_icon()
 
@@ -333,7 +339,7 @@
 		stack_trace("Invalid persistence_id - [persistence_id]")
 		return
 	var/data = C.get_data_string()
-	var/md5 = md5(data)
+	var/md5 = md5(lowertext(data))
 	var/list/current = SSpersistence.paintings[persistence_id]
 	if(!current)
 		current = list()
@@ -345,12 +351,49 @@
 	var/result = rustg_dmi_create_png(png_path,"[C.width]","[C.height]",data)
 	if(result)
 		CRASH("Error saving persistent painting: [result]")
-	current += list(list("title" = C.painting_name , "md5" = md5))
+	current += list(list("title" = C.painting_name , "md5" = md5, "ckey" = C.author_ckey))
 	SSpersistence.paintings[persistence_id] = current
 
 /obj/item/canvas/proc/fill_grid_from_icon(icon/I)
-	var/w = I.Width() + 1
 	var/h = I.Height() + 1
 	for(var/x in 1 to width)
 		for(var/y in 1 to height)
-			grid[x][y] = I.GetPixel(w-x,h-y)
+			grid[x][y] = I.GetPixel(x,h-y)
+
+//Presets for art gallery mapping, for paintings to be shared across stations
+/obj/structure/sign/painting/library
+	persistence_id = "library"
+
+/obj/structure/sign/painting/library_secure
+	persistence_id = "library_secure"
+
+/obj/structure/sign/painting/library_private // keep your smut away from prying eyes, or non-librarians at least
+	persistence_id = "library_private"
+
+/obj/structure/sign/painting/vv_get_dropdown()
+	. = ..()
+	VV_DROPDOWN_OPTION(VV_HK_REMOVE_PAINTING, "Remove Persistent Painting")
+
+/obj/structure/sign/painting/vv_do_topic(list/href_list)
+	. = ..()
+	if(href_list[VV_HK_REMOVE_PAINTING])
+		if(!check_rights(NONE))
+			return
+		var/mob/user = usr
+		if(!persistence_id || !C)
+			to_chat(user,"<span class='warning'>This is not a persistent painting.</span>")
+			return
+		var/md5 = md5(lowertext(C.get_data_string()))
+		var/author = C.author_ckey
+		var/list/current = SSpersistence.paintings[persistence_id]
+		if(current)
+			for(var/list/entry in current)
+				if(entry["md5"] == md5)
+					current -= entry
+			var/png = "data/paintings/[persistence_id]/[md5].png"
+			fdel(png)
+		for(var/obj/structure/sign/painting/P in SSpersistence.painting_frames)
+			if(P.C && md5(P.C.get_data_string()) == md5)
+				QDEL_NULL(P.C)
+		log_admin("[key_name(user)] has deleted a persistent painting made by [author].")
+		message_admins("<span class='notice'>[key_name_admin(user)] has deleted persistent painting made by [author].</span>")

@@ -4,7 +4,8 @@
 	desc = "A standard edition welder provided by Nanotrasen."
 	icon = 'icons/obj/tools.dmi'
 	icon_state = "welder"
-	item_state = "welder"
+	inhand_icon_state = "welder"
+	worn_icon_state = "welder"
 	lefthand_file = 'icons/mob/inhands/equipment/tools_lefthand.dmi'
 	righthand_file = 'icons/mob/inhands/equipment/tools_righthand.dmi'
 	flags_1 = CONDUCT_1
@@ -15,14 +16,17 @@
 	usesound = list('sound/items/welder.ogg', 'sound/items/welder2.ogg')
 	drop_sound = 'sound/items/handling/weldingtool_drop.ogg'
 	pickup_sound =  'sound/items/handling/weldingtool_pickup.ogg'
-	var/acti_sound = 'sound/items/welderactivate.ogg'
-	var/deac_sound = 'sound/items/welderdeactivate.ogg'
+	light_color = LIGHT_COLOR_FIRE
 	throw_speed = 3
 	throw_range = 5
 	w_class = WEIGHT_CLASS_SMALL
 	armor = list("melee" = 0, "bullet" = 0, "laser" = 0, "energy" = 0, "bomb" = 0, "bio" = 0, "rad" = 0, "fire" = 100, "acid" = 30)
 	resistance_flags = FIRE_PROOF
-
+	heat = 3800
+	tool_behaviour = TOOL_WELDER
+	toolspeed = 1
+	wound_bonus = 10
+	bare_wound_bonus = 15
 	custom_materials = list(/datum/material/iron=70, /datum/material/glass=30)
 	var/welding = 0 	//Whether or not the welding tool is off(0), on(1) or currently welding(2)
 	var/status = TRUE 		//Whether the welder is secured or unsecured (able to attach rods to it to make a flamethrower)
@@ -30,11 +34,9 @@
 	var/change_icons = 1
 	var/can_off_process = 0
 	var/light_intensity = 2 //how powerful the emitted light is when used.
-	var/progress_flash_divisor = 10
 	var/burned_fuel_for = 0	//when fuel was last removed
-	heat = 3800
-	tool_behaviour = TOOL_WELDER
-	toolspeed = 1
+	var/acti_sound = 'sound/items/welderactivate.ogg'
+	var/deac_sound = 'sound/items/welderdeactivate.ogg'
 
 /obj/item/weldingtool/Initialize()
 	. = ..()
@@ -45,12 +47,13 @@
 /obj/item/weldingtool/ComponentInitialize()
 	. = ..()
 	AddElement(/datum/element/update_icon_updates_onmob)
+	AddElement(/datum/element/tool_flash, light_intensity)
 
 /obj/item/weldingtool/update_icon_state()
 	if(welding)
-		item_state = "[initial(item_state)]1"
+		inhand_icon_state = "[initial(inhand_icon_state)]1"
 	else
-		item_state = "[initial(item_state)]"
+		inhand_icon_state = "[initial(inhand_icon_state)]"
 
 
 /obj/item/weldingtool/update_overlays()
@@ -245,22 +248,6 @@
 /obj/item/weldingtool/proc/isOn()
 	return welding
 
-// When welding is about to start, run a normal tool_use_check, then flash a mob if it succeeds.
-/obj/item/weldingtool/tool_start_check(mob/living/user, amount=0)
-	. = tool_use_check(user, amount)
-	if(. && user && get_dist(get_turf(src), get_turf(user)) <= 1)
-		user.flash_act(light_intensity)
-
-// Flash the user during welding progress
-/obj/item/weldingtool/tool_check_callback(mob/living/user, amount, datum/callback/extra_checks)
-	. = ..()
-	if(. && user && get_dist(get_turf(src), get_turf(user)) <= 1)
-		if (progress_flash_divisor == 0)
-			user.flash_act(min(light_intensity,1))
-			progress_flash_divisor = initial(progress_flash_divisor)
-		else
-			progress_flash_divisor--
-
 // If welding tool ran out of fuel during a construction task, construction fails.
 /obj/item/weldingtool/tool_use_check(mob/living/user, amount)
 	if(!isOn() || !check_fuel())
@@ -360,7 +347,7 @@
 	name = "upgraded industrial welding tool"
 	desc = "An upgraded welder based of the industrial welder."
 	icon_state = "upindwelder"
-	item_state = "upindwelder"
+	inhand_icon_state = "upindwelder"
 	max_fuel = 80
 	custom_materials = list(/datum/material/iron=70, /datum/material/glass=120)
 
@@ -368,14 +355,14 @@
 	name = "experimental welding tool"
 	desc = "An experimental welder capable of self-fuel generation and less harmful to the eyes."
 	icon_state = "exwelder"
-	item_state = "exwelder"
+	inhand_icon_state = "exwelder"
 	max_fuel = 40
 	custom_materials = list(/datum/material/iron=70, /datum/material/glass=120)
-	var/last_gen = 0
 	change_icons = 0
 	can_off_process = 1
 	light_intensity = 1
 	toolspeed = 0.5
+	var/last_gen = 0
 	var/nextrefueltick = 0
 
 /obj/item/weldingtool/experimental/process()

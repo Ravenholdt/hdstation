@@ -58,6 +58,7 @@
 	M.cure_nearsighted(EYE_DAMAGE)
 	M.set_blindness(0)
 	M.set_blurriness(0)
+	M.clear_fullscreen("eye_damage", 0)
 	M.update_sight()
 
 
@@ -82,7 +83,6 @@
 		damaged = FALSE
 		C.clear_fullscreen("eye_damage")
 	return
-
 
 /obj/item/organ/eyes/night_vision
 	name = "shadow eyes"
@@ -322,7 +322,7 @@
 	on_mob.forceMove(scanning)
 	for(var/i in 1 to light_beam_distance)
 		scanning = get_step(scanning, scandir)
-		if(scanning.opacity || scanning.has_opaque_atom)
+		if(IS_OPAQUE_TURF(scanning))
 			stop = TRUE
 		var/obj/effect/abstract/eye_lighting/L = LAZYACCESS(eye_lighting, i)
 		if(stop)
