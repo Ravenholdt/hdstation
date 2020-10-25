@@ -26,14 +26,14 @@
 	return ..()
 
 /obj/structure/big_delivery/contents_explosion(severity, target)
-	for(var/atom/movable/AM in contents)
+	for(var/thing in contents)
 		switch(severity)
 			if(EXPLODE_DEVASTATE)
-				SSexplosions.highobj += AM
+				SSexplosions.high_mov_atom += thing
 			if(EXPLODE_HEAVY)
-				SSexplosions.medobj += AM
+				SSexplosions.med_mov_atom += thing
 			if(EXPLODE_LIGHT)
-				SSexplosions.lowobj += AM
+				SSexplosions.low_mov_atom += thing
 
 /obj/structure/big_delivery/examine(mob/user)
 	. = ..()
@@ -177,14 +177,14 @@
 	var/obj/item/barcode/sticker
 
 /obj/item/small_delivery/contents_explosion(severity, target)
-	for(var/atom/movable/AM in contents)
+	for(var/thing in contents)
 		switch(severity)
 			if(EXPLODE_DEVASTATE)
-				SSexplosions.highobj += AM
+				SSexplosions.high_mov_atom += thing
 			if(EXPLODE_HEAVY)
-				SSexplosions.medobj += AM
+				SSexplosions.med_mov_atom += thing
 			if(EXPLODE_LIGHT)
-				SSexplosions.lowobj += AM
+				SSexplosions.low_mov_atom += thing
 
 /obj/item/small_delivery/attack_self(mob/user)
 	to_chat(user, "<span class='notice'>You start to unwrap the package...</span>")
@@ -198,6 +198,7 @@
 	playsound(src.loc, 'sound/items/poster_ripped.ogg', 50, TRUE)
 	new /obj/effect/decal/cleanable/wrapping(get_turf(user))
 	qdel(src)
+
 
 /obj/item/small_delivery/attack_self_tk(mob/user)
 	if(ismob(loc))
@@ -214,6 +215,8 @@
 	new /obj/effect/decal/cleanable/wrapping(get_turf(user))
 	unwrap_contents()
 	qdel(src)
+	return COMPONENT_CANCEL_ATTACK_CHAIN
+
 
 /obj/item/small_delivery/examine(mob/user)
 	. = ..()
