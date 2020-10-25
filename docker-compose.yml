@@ -1,0 +1,9 @@
+version: 2
+services:
+    hdstation:
+        image: tgstation/tgstation
+        ports: 
+            1337:1337
+        volumes: 
+            - ./config:/tgstation/config
+            - ./data:/tgstation/data
